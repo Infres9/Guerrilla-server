@@ -39,6 +39,7 @@ Lobby.prototype.incomingMessage = function (id, jsonMsg) {
             this.battleField.nextTurn();
             this.warnPlayer();
         case "move":
+            console.log(jsonMsg);
             if(this.battleField.move(id, jsonMsg.data['from'], jsonMsg.data['to'])){
                 this.broadcast(JSON.stringify(jsonMsg));//confirm move
             }else{
