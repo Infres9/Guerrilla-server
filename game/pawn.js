@@ -41,19 +41,19 @@ Pawn.prototype.isValidMove = function (from, to, field) {
 };
 
 Pawn.prototype.isValidAttack = function (from, to) {
-    var m = toMove(from,to);
+    let m = toMove(from,to);
 
     if(this.type === Pawn.types.INFANTRY){
-        return (m.aX === 1 && m.y === 0 || m.y == ((this.color === Pawn.colors.WHITE) ? 1 : -1) && m.x === 0);
+        return (m.aX === 1 && m.y === 0 || m.y === ((this.color === Pawn.colors.WHITE) ? -1 : 1) && m.x === 0);
     }
 
     if(this.type === Pawn.types.GUNNER){
-        var mult = this.color === Pawn.colors.WHITE ? 1 : -1;
-        return ((m.aX === 1 || m.aX === 2) && m.y === 0 | (m.y == mult || m.y == mult*2) && m.x == 0 );
+        let mult = this.color === Pawn.colors.WHITE ? -1 : 1;
+        return ((m.aX === 1 || m.aX === 2) && m.y === 0 || (m.y === mult || m.y === mult*2 || m.y === mult*3) && m.x === 0 );
     }
 
     if(this.type === Pawn.types.MOBILE_TOWER){
-        return (m.aX == 1 && m.aY == 1 || (m.aX === 2 && m.y === 0 || m.aY === 2 && m.x === 0));
+        return (m.aX <= 1 && m.aY <= 1 || (m.aX === 2 && (m.aY === 0 || m.aY === 2)  || m.aY === 2 && (m.aX === 0 || m.aX === 2) ));
     }
 
     return false;//what type ?

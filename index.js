@@ -7,17 +7,23 @@ const WebSocket = require('ws');
 
 const ws = new WebSocket.Server({ port: 4554 });
 
-var mLobbies = [];
+var mLobbies = [createLobby()];
 
-mLobbies.push(new Lobby());
+function createLobby(){
+    var nwLobby = new Lobby();
+    nwLobby.onFinished(l => {
+        mLobbies = mLobbies.filter(x => x !== l);
+    });
 
+    nwLobby.onStart(l => {
+        mLobbies.push(createLobby());
+    });
+
+    return nwLobby;
+}
 
 ws.on('connection', function(socket){
-    if(mLobbies[mLobbies.length-1].addSocket(socket)){//ready to start
-        mLobbies[mLobbies.length-1].start();
-        //listen for lobby ending
-        mLobbies.push(new Lobby());
-    }
+    mLobbies[mLobbies.length-1].addSocket(socket);
 });
 
 console.log("Web socket listening on port 4554");

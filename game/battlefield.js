@@ -44,12 +44,41 @@ function BattleField() {
     this.completedActions = {"move": 0, "attack": 0};
 }
 
+/**
+ * Returns the id of the player if there is one,
+ * returns -1 otherwise
+ */
+BattleField.prototype.winner = function () {
+  var metWhite = false;
+  var metBlack = false;
+  for(var y = 0; y < this.field.length; ++y){
+      var line = this.field[y];
+      for(var x = 0; x < line.length; ++x){
+          var p = line[x];
+          if(p){
+              if(p.color === Pawn.colors.WHITE){
+                  if(metBlack)return -1;
+                  metWhite = true;
+              }else if(p.color === Pawn.colors.BLACK){
+                  if(metWhite)return -1;
+                  metBlack = true;
+              }
+          }
+      }
+  }
+
+  if(metWhite)return Pawn.colors.WHITE;
+
+  return Pawn.colors.BLACK;
+
+};
+
 BattleField.prototype.isEndTurn = function () {
     return this.completedActions.move && this.completedActions.attack;
 };
 
 BattleField.prototype.move = function(id, f, t){
-    if(id != this.playersTurn || this.completedActions.move)return false;//not the player's turn
+    if(id !== this.playersTurn || this.completedActions.move)return false;//not the player's turn
 
     if(!this.field[f.y][f.x] || this.field[t.y][t.x])return false;//no one at the given place or someone at the destination
 
@@ -65,9 +94,20 @@ BattleField.prototype.move = function(id, f, t){
 };
 
 BattleField.prototype.attack = function (id, f, t) {
-    if(id != this.playersTurn || this.completedActions.attack)return false;//not the player's turn to attack
+    if(id !== this.playersTurn || this.completedActions.attack){
+        console.log("It's not your turn, wait your turn the attack")
+        return false;
+    }//not the player's turn to attack
 
-    if(!this.field[f.y][f.x] || this.field[t.y][t.x].color === this.field[f.y][f.x].color)return false;//no attacker or same color
+    if(!this.field[f.y][f.x] || !this.field[t.y][t.x] || this.field[t.y][t.x].color === this.field[f.y][f.x].color){
+        console.log("State of the board cannot allow attack");
+        console.log(f);
+        console.log(t);
+        console.log(this.serialize());
+
+        process.exit();//have the stacktrace
+        return false;
+    }//no attacker or same color
 
     var pawn = this.field[f.y][f.x];
 
@@ -75,6 +115,12 @@ BattleField.prototype.attack = function (id, f, t) {
         this.completedActions.attack = 1;
         this.field[t.y][t.x] = null;
         return true;
+    }else{
+        //print board
+        console.log(f);
+        console.log(t);
+        console.log(this.serialize());
+
     }
 
     return false;

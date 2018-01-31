@@ -3,95 +3,130 @@ const BattleField = require("./battlefield")
 
 
 function Lobby(){
-    this.socket1 = null;
-    this.socket2 = null;
     this.sockets = [];
 
     this.battleField = new BattleField();
     this.battleField.init();
+
+    this.finishCallback = null;
+    this.startingCallback = null;
+
+    this.isOver = false;
+}
+
+Lobby.prototype.sendMessage = function (socket, msg) {
+    msg["id"] = socket.msgCounter++;
+    socket.send(JSON.stringify(msg));
+};
+
+
+Lobby.prototype.onFinished = function (callback) {
+    this.finishCallback = callback;
+};
+
+Lobby.prototype.onStart = function (callback) {
+    this.startingCallback = callback;
 }
 
 Lobby.prototype.start = function () {
+    if(this.startingCallback){
+        this.startingCallback(this);
+    }
+
     this.warnPlayer();
 };
 
 Lobby.prototype.broadcast = function (message) {
-    this.sockets.forEach(s => s.send(message));
+    this.sockets.forEach(s => this.sendMessage(s, message) );
 };
 
 Lobby.prototype.incomingMessage = function (id, jsonMsg) {
     if(!jsonMsg.type)return;
 
     if(jsonMsg.type === "get_board"){
-        var data = {
+        let data = {
             "type":"get_board",
             "data" : this.battleField.serialize()
-        }
+        };
 
-        this.sockets[id].send(JSON.stringify(data));
+        this.sendMessage(this.sockets[id], data);
         return;
     }
 
-    if(id != this.battleField.playersTurn)return; //not his turn
+    if(this.isOver)return;
+
+    if(jsonMsg.type === "is_ready"){
+        this.sockets[id].ready = true;
+        if(this.isReady())
+            this.start();
+        return;
+    }
+
+
+    if(id !== this.battleField.playersTurn)return; //not his turn
 
     switch(jsonMsg.type){
         case "end_turn":
             this.battleField.nextTurn();
             this.warnPlayer();
+            return;
         case "move":
-            console.log(jsonMsg);
             if(this.battleField.move(id, jsonMsg.data['from'], jsonMsg.data['to'])){
-                this.broadcast(JSON.stringify(jsonMsg));//confirm move
+                this.broadcast(jsonMsg);//confirm move
             }else{
-                this.sockets[id].send(JSON.stringify({
+                this.sendMessage(this.sockets[id],{
                     "type" : "error",
                     "data": "Move not possible"
-                }));
+                });
             }
 
-            //do the move, broadcast the move
-            if(this.battleField.isEndTurn()){
-                this.battleField.nextTurn();
-                this.warnPlayer();
-            }
             break;
         case "attack":
-            if(this.battleField.attack(id, jsonMsg.from, jsonMsg.to)){
-                this.broadcast(JSON.stringify(jsonMsg));//confirm attack
+            if(this.battleField.attack(id, jsonMsg.data['from'], jsonMsg.data['to'])){
+                this.broadcast(jsonMsg);//confirm attack
             }else{
-                this.sockets[id].send(JSON.stringify({
-                        "type":"error",
-                        "data":"attack not possible"
-                }));
-            }
-
-            if(this.battleField.isEndTurn()){
-                //do the attack, broadcast the attack
-                this.battleField.nextTurn();
-                this.warnPlayer();
+                this.sendMessage(this.sockets[id], {"type":"error","data":"attack not possible"});
             }
             break;
     }
 
+    let winner = this.battleField.winner();
+
+    if(winner !== -1){
+        this.sendMessage(this.sockets[winner],{type:"you_win"});
+        this.sendMessage(this.sockets[1-winner], {type : "you_loose"});
+        this.endGame();
+        return;
+    }
+
+    if(this.battleField.isEndTurn()){
+        //do the attack, broadcast the attack
+        this.battleField.nextTurn();
+        this.warnPlayer();
+    }
 };
 
 
-Lobby.prototype.addSocket = function (socket) {
-    var msg = {type : "your_id",data: 0};
-    if(!this.socket1){
-        socket.id = 0;
-        this.socket1 = socket;
-        socket.send(JSON.stringify(msg));
-        this.sockets.push(socket);
-    }else if(!this.socket2){
-        socket.id = 1;
-        this.socket2 = socket;
-        msg.data = 1;
-        socket.send(JSON.stringify(msg));
-        this.sockets.push(socket);
-    }else{
-        return;
+Lobby.prototype.endGame = function () {
+    this.sockets.forEach(s => s.close());
+    this.isOver = true;
+    this.sockets = [];
+    if(this.finishCallback){
+        this.finishCallback(this);
     }
+}
+
+Lobby.prototype.addSocket = function (socket) {
+    if(this.sockets.length === 2)return;
+
+    let msg = {type : "your_id",data: this.sockets.length};
+
+    socket.id = this.sockets.length;
+    socket.msgCounter = 0;
+
+    this.sendMessage(socket, msg);
+    this.sockets.push(socket);
+
 
     socket.on("message", (message) => {
         try{
@@ -107,11 +142,11 @@ Lobby.prototype.addSocket = function (socket) {
 };
 
 Lobby.prototype.isReady = function(){
-    return !!this.socket1 && !!this.socket2;
+    return this.sockets.length === 2 && this.sockets.every(s => s.ready);
 };
 
 Lobby.prototype.warnPlayer = function () {
-    this.sockets[this.battleField.playersTurn].send('{"type":"your_turn"}');
+    this.sendMessage(this.sockets[this.battleField.playersTurn], {type : "your_turn"});
 };
 
 module.exports = Lobby;
