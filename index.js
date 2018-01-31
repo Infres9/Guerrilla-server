@@ -5,7 +5,15 @@ const Lobby = require('./game/lobby')
 
 const WebSocket = require('ws');
 
-const ws = new WebSocket.Server({ port: 4554 });
+const server = express()
+    .use(express.static(path.join(__dirname, 'public')))
+    .set('views', path.join(__dirname, 'views'))
+    .set('view engine', 'ejs')
+    .get('/', (req, res) => res.render('pages/index'))
+    .listen(PORT, () => console.log(`Listening on ${ PORT }`))
+
+
+const ws = new WebSocket.Server({ server });
 
 var mLobbies = [createLobby()];
 
@@ -25,12 +33,3 @@ function createLobby(){
 ws.on('connection', function(socket){
     mLobbies[mLobbies.length-1].addSocket(socket);
 });
-
-console.log("Web socket listening on port 4554");
-
-express()
-  .use(express.static(path.join(__dirname, 'public')))
-  .set('views', path.join(__dirname, 'views'))
-  .set('view engine', 'ejs')
-  .get('/', (req, res) => res.render('pages/index'))
-  .listen(PORT, () => console.log(`Listening on ${ PORT }`))
