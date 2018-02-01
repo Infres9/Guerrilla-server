@@ -20,49 +20,266 @@
   <div class="alert alert-info text-center" role="alert">
     This api is still in development and can be broken :/
   </div>
+    <hr/>
+    This API contains two parts : the client part and the server part.<br>
+    The <b>client</b> part contains all the different messages you can send
+    to the server in order to inform it about an action, or get some data.<br/>
+    The <b>server</b> part contains all the types of message you can receive from the server.<br>
+    All the messages are encoded in JSON, always contains an <b>id</b> and a <b>type</b>. It may contain
+    a <b>data</b> part, but not always (only when necessary)<br>
+    A typical message you can send to the server is <code>{"type" : "end_turn"}</code><br>
+    A typical message you can receive from the server is <code>{"id": 93, "type" : "your_turn"}</code>
   <hr>
   <div class="row">
     <div class="col-md-12">
-      <h3><span class="glyphicon glyphicon-info-sign"></span> API REF</h3>
-      <ul>
-        <li>Connect your socket client the following url <pre>ws://guerrilla.herokuapp.com:4554</pre>.</li>
-        <li>
-          All the messages are in json and always have the same content<pre>{type : ..., (data : ...)}</pre>
-          the 'data' part may not always be available
-        </li>
-        <li>
-          You will receive your player's id (type = "your_id" and the data is the id (0 or 1) <i></i>
-        </li>
-        <li>
-          If it is your turn to play you will receive a <pre>{type : "your_turn"}</pre> message
-        </li>
-        <li>
-          To move, send the message <pre>
-{
-  type : "move",
-  data : {from : {x : ..., y: ...}, to : {x:...,y:..}}
-}</pre>
-          If the given coordinates are valid, the move will be done and the message you sent
-          will be broacasted to all connected players (even yourself)
-        </li>
-        <li>
-          To attack, send the same message as the "move" directive, but change type type to <i>attack</i>
-            "From" is the unit who's attacking, and "to" is the attacked unit
-        </li>
-        <li>
-          When your turn ended, it will automatically warn the other player, and the message you send to attack or move
-          will not be taken into account
-        </li>
-        <li>
-          You can end your turn sooner, by sending the message <pre>{type : "end_turn"}</pre>
-        </li>
-        <li>
-          If ever, you want to get the field in its current state, just send the message <pre>{type : "get_board"}</pre>
-        </li>
-        <li>
-          When an action is not valid, the server will send you a message, the type of the message will be "error"
-        </li>
-      </ul>
+      <h2><span class="glyphicon glyphicon-info-sign"></span> API REF</h2>
+        <div class="alert alert-info text-center" role="alert" >
+            Connect to <code class="co">ws://guerrilla.herokuapp.com:<%= process.env.PORT || 5000 %></code>
+        </div>
+        <div class="col-xs-12">
+            <h3>Messages you can send to the server</h3>
+        </div>
+        <div class="col-xs-12">
+            <h4>End turn</h4>
+            <p>When you finished your play</p>
+            <table class="table" >
+                <thead>
+                <th>Field</th>
+                <th>Value</th>
+                <th>Description</th>
+                </thead>
+                <tr>
+                    <td>type</td>
+                    <td><code>"end_turn"</code></td>
+                    <td>Indicate you're done playing</td>
+                </tr>
+                <tr>
+                    <td>data</td>
+                    <td>ø</td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+        <div class="col-xs-12">
+            <h4>Move</h4>
+            <p>When you want to move, same as <a href="#move">the server</a> </p>
+        </div>
+        <div class="col-xs-12">
+            <h4>Attack</h4>
+            <p>When you want to attack, same format as <a href="#attack">the server</a> </p>
+        </div>
+
+        <div class="col-xs-12">
+            <h4>Get board</h4>
+            <p>When you want to get the board</p>
+            <table class="table" >
+                <thead>
+                <th>Field</th>
+                <th>Value</th>
+                <th>Description</th>
+                </thead>
+                <tr>
+                    <td>type</td>
+                    <td><code>"get_board"</code></td>
+                    <td>Indicate you want to get the board</td>
+                </tr>
+                <tr>
+                    <td>data</td>
+                    <td>ø</td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="col-xs-12">
+            <h4>Is ready</h4>
+            <p>When you are ready to start playing</p>
+            <table class="table" >
+                <thead>
+                <th>Field</th>
+                <th>Value</th>
+                <th>Description</th>
+                </thead>
+                <tr>
+                    <td>type</td>
+                    <td><code>"is_ready"</code></td>
+                    <td>Indicate you're ready to play, to send only once, at the beginning when you received the board</td>
+                </tr>
+                <tr>
+                    <td>data</td>
+                    <td>ø</td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+
+        <hr>
+        <div class="col-xs-12">
+            <h3>Messages sent by the server</h3>
+        </div>
+        <div class="col-xs-12">
+            <h4 id="your_turn" >Your turn</h4>
+            <p>When it's your turn to play</p>
+            <table class="table" >
+                <thead>
+                    <th>Field</th>
+                    <th>Value</th>
+                    <th>Description</th>
+                </thead>
+                <tr>
+                    <td>type</td>
+                    <td><code>"your_turn"</code></td>
+                    <td>Indicate it's your turn to play</td>
+                </tr>
+                <tr>
+                    <td>data</td>
+                    <td>ø</td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+
+        <div id="move" class="col-xs-12">
+            <h4>Move</h4>
+            <p>When a move is done by a player</p>
+            <table class="table" >
+                <thead>
+                <th>Field</th>
+                <th>Value</th>
+                <th>Description</th>
+                </thead>
+                <tr>
+                    <td>type</td>
+                    <td><code>"move"</code></td>
+                    <td>Indicate a move has been done</td>
+                </tr>
+                <tr>
+                    <td rowspan="2" >data</td>
+                    <td><code>from : {x: ..., y: ...}</code></td>
+                    <td>Origin of the moving unit</td>
+                </tr>
+                <tr>
+                    <td><code>to : {x:..., y:...}</code></td>
+                    <td>Destination of the moving unit</td>
+                </tr>
+            </table>
+        </div>
+
+        <div id="attack" class="col-xs-12">
+            <h4>Attack</h4>
+            <p>When a unit is attacking another unit (and kills it)</p>
+            <table class="table" >
+                <thead>
+                <th>Field</th>
+                <th>Value</th>
+                <th>Description</th>
+                </thead>
+                <tr>
+                    <td>type</td>
+                    <td><code>"attack"</code></td>
+                    <td>Indicate an attack has been done</td>
+                </tr>
+                <tr>
+                    <td rowspan="2" >data</td>
+                    <td><code>from : {x: ..., y: ...}</code></td>
+                    <td>Origin of the attacking unit</td>
+                </tr>
+                <tr>
+                    <td><code>to : {x:..., y:...}</code></td>
+                    <td>Position of the attacked unit</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="col-md-12">
+            <h4>Your id</h4>
+            <p>Send to the player his id</p>
+            <table class="table" >
+                <thead>
+                <th>Field</th>
+                <th>Value</th>
+                <th>Description</th>
+                </thead>
+                <tr>
+                    <td>type</td>
+                    <td><code>"your_id"</code></td>
+                    <td>The player's id</td>
+                </tr>
+                <tr>
+                    <td>data</td>
+                    <td><code>int</code></td>
+                    <td>Id of the player</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="col-xs-12">
+            <h4>Get board</h4>
+            <p>When the client requests the board, sends the board in its current state</p>
+            <table class="table" >
+                <thead>
+                <th>Field</th>
+                <th>Value</th>
+                <th>Description</th>
+                </thead>
+                <tr>
+                    <td>type</td>
+                    <td><code>"get_board"</code></td>
+                    <td>The board</td>
+                </tr>
+                <tr>
+                    <td>data</td>
+                    <td><code>json object</code></td>
+                    <td>Board in its current state</td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="col-xs-12">
+            <h4>You win</h4>
+            <p>When the game's over, and you won !</p>
+            <table class="table" >
+                <thead>
+                <th>Field</th>
+                <th>Value</th>
+                <th>Description</th>
+                </thead>
+                <tr>
+                    <td>type</td>
+                    <td><code>"you_win"</code></td>
+                    <td>Indicate you won this game</td>
+                </tr>
+                <tr>
+                    <td>data</td>
+                    <td>ø</td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+
+        <div class="col-xs-12">
+            <h4>You loose</h4>
+            <p>When the game's over, and you lost</p>
+            <table class="table" >
+                <thead>
+                <th>Field</th>
+                <th>Value</th>
+                <th>Description</th>
+                </thead>
+                <tr>
+                    <td>type</td>
+                    <td><code>"you_loose"</code></td>
+                    <td>Indicate you lost the games</td>
+                </tr>
+                <tr>
+                    <td>data</td>
+                    <td>ø</td>
+                    <td></td>
+                </tr>
+            </table>
+        </div>
+
+
     </div>
 </div>
 
