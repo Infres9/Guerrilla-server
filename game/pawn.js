@@ -33,7 +33,7 @@ Pawn.prototype.isValidMove = function (from, to, field) {
         if(m.aX == 2 || m.aY == 2){
             var incrX = (m.x/2)|0;
             var incrY = (m.y/2)|0;
-            return !field[from.y+incrY][from.x+incrX];//intermediate box must be empty
+            return field[from.y+incrY] && !field[from.y+incrY][from.x+incrX];//intermediate box must be empty
         }
 
         return true;

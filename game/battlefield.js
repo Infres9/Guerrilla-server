@@ -7,12 +7,6 @@ function Coordinate(x, y){
     this.y = y;
 }
 
-Coordinate.prototype.toAlgebraic = function () {
-
-    return Coordinate.letterRange[this.x] + (this.y + "");
-
-};
-
 Coordinate.prototype.serialize = function () {
     return {x:this.x, y : this.y};
 };
@@ -117,6 +111,7 @@ BattleField.prototype.attack = function (id, f, t) {
         return true;
     }else{
         //print board
+        console.log("Seems to be an invalid attack");
         console.log(f);
         console.log(t);
         console.log(this.serialize());

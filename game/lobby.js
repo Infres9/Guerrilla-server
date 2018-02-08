@@ -138,8 +138,7 @@ Lobby.prototype.addSocket = function (socket) {
 
     socket.on('close', () => {
         this.sockets = this.sockets.filter(l => l != socket);
-
-        this.sockets.broadcast({type: "you_win"});
+        this.broadcast({type: "you_win"});
         this.endGame();
     });
 
