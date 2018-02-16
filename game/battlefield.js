@@ -170,7 +170,7 @@ function range(from, to, step){
     step = step || 1;
     var dist = (to - from)/step;
 
-    return Array.apply(null, new Array(dist))
+    return Array.apply(null, new Array(dist + 1))
         .map((x,i) => from + (i*step));
 }
 
